@@ -1,71 +1,44 @@
 export function handleSubmit(event) {
-  event.preventDefault();
+  event.preventDefault()
 
-  //Clear the earlier error message
-  while (document.getElementById("errorMessage").firstElementChild !== null) {
-    document.getElementById("errorMessage").firstElementChild.remove();
-  }
+  // check what text was put into the form field
+  let userUrl = document.getElementById('url').value;
+  // Client.checkForName(formUrl)
 
-  //Store the URL entered by the user
-  const enteredURL = document.getElementById("url").value;
 
-  //validating URL
-  validateURL(enteredURL);
-
-  //Invoke getSentiment function
-  getSentiment("/api", { url: `${enteredURL}` });
+  // Call postdata passing in the input url
+  getSentiment(userUrl)
+      .then(function(data) {
+          // Call uiUpdate once data has been sent back from server
+          updateUserInterface(data);
+      })
 }
 
-//Function that fetches response from Aylien API
-const getSentiment = async (url = "", data = "") => {
-  console.log("Inside POST:", data);
-  const response = await fetch(url, {
-    method: "POST",
-    credentials: "same-origin",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
+// Async POST
+const getSentiment = async(url = '') => {
+
+  const response = await fetch('http://localhost:8085/api', {
+      method: 'POST',
+      credentials: 'same-origin',
+      mode: 'cors',
+      headers: {
+          'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ "url": url }), // body data type must match "Content-Type" header        
   });
+
   try {
-    const newData = await response.json();
-    console.log("newData: ", newData);
-    //Update UI
-    document.getElementById("polarity").innerHTML =
-      "Polarity: " + newData.polarity;
-    document.getElementById("polarity_confidence").innerHTML =
-      "Subjectivity: " + newData.polarity_confidence;
-    document.getElementById("subjectivity").innerHTML =
-      "Polarity: " + newData.subjectivity;
-    document.getElementById("subjectivity_confidence").innerHTML =
-      "Subjectivity: " + newData.subjectivity_confidence;
+      const newData = await response.json();
+      console.log(newData)
+      return newData
   } catch (error) {
-    console.log("error", error);
-  }
-};
-
-//validate URL
-function validateURL(url) {
-  let protocol = url.match(/^https?:\/\//g);
-
-  if (protocol === null) {
-    const invalidURL = document.createElement("h4");
-    invalidURL.innerHTML =
-      "Enter a valid protocol - Supported protocols are http:// or https://";
-    const messagePlaceholder = document.getElementById("errorMessage");
-    messagePlaceholder.appendChild(invalidURL);
-  } else {
-  }
-
-  let domain = url.match(/\./g);
-  if (domain === null) {
-    const invalidURL = document.createElement("h4");
-    invalidURL.innerHTML =
-      "Enter a valid domain - No period detected in the domain";
-    const messagePlaceholder = document.getElementById("errorMessage");
-    messagePlaceholder.appendChild(invalidURL);
-  } else {
+      console.log("error from client fetch", error);
   }
 }
+function updateUserInterface(data) {
+  document.getElementById('polarity').innerHTML = `Polarity: ${data.polarity}`;
+  document.getElementById('polarity_confidence').innerHTML = `Polarity Confidence: ${data.polarity_confidence}`;
+  document.getElementById('subjectivity').innerHTML = `Subjectivity: ${data.subjectivity}`;
+  document.getElementById('subjectivity_confidence').innerHTML = `Subjectivity Confidence: ${data.subjectivity_confidence}`;
 
-//module.exports = validateURL;
+}
